@@ -156,7 +156,7 @@
     "src/server/thin-body.bend": "cc0b822d95259c88ce0261bb6bdfbb6903fad200c3eb57229d9dcfd56e0b1f46",
     "src/server/thin-mirror.bend": "b488dc7c45fe49bb1aa17966f454f1ee0e9cfef7db4d619c265c298c9bc94e92",
     "src/server/thin-side-index.bend": "a90f7c343b70767d371cc2d44c989684489f70c03a7f96fa04911b8b4509e4b2",
-    "src/server/thin-sidebar.bend": "3f4f103551054d92d10a3d7d355f1b8db948900b83e2942009cb7d0e1e1cf5c7",
+    "src/server/thin-sidebar.bend": "e6bd89a2b2bac0627fa84e0d849d3a830987f2bd213912ea75758b63c5379918",
     "src/server/thin-signal-text.bend": "9340744b270552b7f88a8fb31864fb639b62f013921649a733bc5e0aa0b12994",
     "src/server/thin-signals.bend": "43d380d04ab73c9fcb3fc7dcc307c47b3c93be43a5a2dda09c7f549c254274ef",
     "src/server/thin-splice.bend": "f08bc9b41cab08e1d1d4f6931f1fb8f5a8a2edb81d2fd96231ee544649469eb0",
