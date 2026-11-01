@@ -5631,23 +5631,8 @@ def Models.cache.put(same: Bool, +home: String, +t: String) -> IO(Unit):
     case False{}:
       IO.bind(String, Unit, Token.save(Models.cache(home), t), w => IO.pure(Unit, Unit{}))
 
-# the two texts the same, one tail call per character: String.eq keeps a
-# frame per character, and a models cache of some 30k characters faulted
-# the hub's 64 MiB stack on macOS at boot
-def Models.same.go(a: String, b: String, ok: Bool) -> Bool:
-  match a b ok:
-    case SNil{} SNil{} True{}:
-      True{}
-    case SCon{x, xt} SCon{y, yt} True{}:
-      Models.same.go(xt, yt, Char.is_eq(x, y))
-    case _ _ _:
-      False{}
-
-def Models.same(a: String, b: String) -> Bool:
-  Models.same.go(a, b, True{})
-
 def Models.cache.remask.k(+home: String, +old: String, +ms: String, +mt: String) -> IO(Unit):
-  Models.cache.put(Bool.or(String.is_empty(old), Models.same(old, BT.Cache.of(ms, mt))), home, BT.Cache.of(ms, mt))
+  Models.cache.put(Bool.or(String.is_empty(old), String.eq(old, BT.Cache.of(ms, mt))), home, BT.Cache.of(ms, mt))
 
 # the cache masked again with the vault as it is now (a secret just saved
 # may already sit in it, from a probe before it was known)
