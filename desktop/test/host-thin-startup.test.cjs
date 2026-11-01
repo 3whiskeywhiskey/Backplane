@@ -7,15 +7,15 @@ async function fixture(supported=false, legacyProbe=false){
  let source=fs.readFileSync(path.resolve(__dirname,'../../src/web/host.js'),'utf8');
  if(legacyProbe)source=source.replaceAll(' || attempt !== thinAttempt','');
  const a=source.indexOf('function showViewStatus('),b=source.indexOf('// when a frame (a heartbeat included)',a);assert(a>0&&b>a);
- const boot=source.slice(source.indexOf('pairingReady.then('),source.indexOf('window.addEventListener("pagehide",'));
+ const bootAt=source.indexOf('pairingReady.then('),boot=source.slice(bootAt,source.indexOf('window.addEventListener("pagehide",',bootAt));assert(bootAt>0&&boot.length>0);
  let clock=0,next=0;const timers=new Map(),sockets=[],requests=[],calls=[],status=[],encoder=new TextEncoder(),decoder=new TextDecoder(),store=new Map();
  const setTimer=(fn,ms)=>{const id=++next;timers.set(id,{fn,at:clock+ms});return id;};
  const clearTimer=id=>timers.delete(id);
  class FixtureRetry extends Retry {constructor(){super({setTimer,clearTimer,now:()=>clock});}}
  class Socket{constructor(url){this.url=url;this.readyState=0;sockets.push(this);}open(){this.readyState=1;this.onopen?.();}send(b){requests.push(JSON.parse(decoder.decode(b)));}frame(v){this.onmessage?.({data:encoder.encode(JSON.stringify(v)).buffer});}close(){this.readyState=3;this.onclose?.();}}
- const ctx={ConnectionLog,bubMoves:new BubMoveObserver(()=>null),terminalOutput:{clear(){calls.push('terminal-retired');},rebind(){}},refocusKeep(){},bodyWindows:{disconnect(){},bind(){}},sealedReply:()=>false,CONNECTION_BUNDLE:'chunk-fixture.js',ThinHost,ThinViews,viewCapability,discoverViews,WebSocket:Socket,location:{origin:'https://fixture',host:'fixture',protocol:'https:'},
+ const ctx={ConnectionLog,bubMoves:new BubMoveObserver(()=>null),terminalOutput:{clear(){calls.push('terminal-retired');},rebind(){},receive(){},retire(){}},refocusKeep(){},bodyWindows:{disconnect(){},bind(){}},sealedReply:()=>false,CONNECTION_BUNDLE:'chunk-fixture.js',ThinHost,ThinViews,viewCapability,discoverViews,WebSocket:Socket,location:{origin:'https://fixture',host:'fixture',protocol:'https:'},
   thin:null,thinSocket:null,thinAttempt:0,thinExpiry:0,thinGreetingTimer:0,thinDraftTimer:0,thinFieldTimer:0,socket:null,viewMode:'discovering',remoteReady:false,remoteEpoch:'',canonicalBoot:false,pairingAccepted:false,
-  thinSession:null,frontendNode:null,frontend:null,cid:'fixture',ui:{},heard:0n,thinMailDraft:{clear(){},bind(){},matches:()=>false,edit(){},scope:()=>'',needsSubmit:()=>false},mailReplyField:()=>undefined,focusedView:{invalidate(){},remote(){calls.push('cache-retired');}},desktopBrowser:{hide(){calls.push('hide');}},Solid:{reset(){},isPlot:()=>false},Plot2d:{reset(){}},
+  thinSession:null,frontendNode:null,frontend:null,cid:'fixture',ui:{},heard:0n,thinMailDraft:{clear(){},bind(){},matches:()=>false,edit(){},scope:()=>'',needsSubmit:()=>false},mailReplyField:()=>undefined,focusedView:{invalidate(){},remote(){calls.push('cache-retired');}},desktopBrowser:{hide(){calls.push('hide');}},Solid:{reset(){},isPlot:()=>false},Plot2d:{reset(){}},ViewerTools:{reset(){},sourceRevision(){},sourceStamp(){}},viewerRpc:{reset(){},receive:()=>false},
   localStorage:{getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v)},performance:{now:()=>clock},Date,Number,JSON,String,Math,Uint8Array,Error,BigInt,
   setTimeout:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:clock+ms});return id;},clearTimeout:id=>timers.delete(id),setInterval:()=>++next,clearInterval(){},
   window:{fetch:async(url)=>{calls.push(new URL(url,'https://fixture').pathname);return {status:supported?200:404,headers:new Headers({'content-type':'application/json'}),body:new ReadableStream({start(c){c.enqueue(encoder.encode(JSON.stringify({version:1,views:{version:1,websocketQuery:'view=1',renderers:['web','mobile'],compatibility:'explicit-only'}})));c.close();}})};}},
@@ -23,7 +23,7 @@ async function fixture(supported=false, legacyProbe=false){
   currentSession:()=>ctx.thinSession||{sel:'A',drafts:{A:'unsent 日本語'},rid:1},choosePresentation:(s,a,v)=>a==='select'?{...s,sel:v}:{...s,drafts:{...s.drafts,[s.sel]:v}},localPresentation(){},
   presentationJson:x=>x,fromList:x=>x,presentationCommand:c=>calls.push(c),anchorOf:()=>null,
   History:{project:(_before,fresh)=>fresh},historyNode:null,timelineList:()=>null,
-  App:{wire_out:t=>encoder.encode(t),presentation_node:n=>n,presentation_prepare:(s,input)=>({...input,rid:s.rid}),presentation_reply:s=>s,presentation_select:(u,id)=>({...u,sel:id}),presentation_handoff:(u,s)=>({...u,sel:s.sel}),unsync:u=>u,lang:()=> 'en'},
+  App:{wire_out:t=>encoder.encode(t),presentation_node:n=>n,presentation_prepare:(s,input)=>({...input,rid:s.rid}),presentation_reply:s=>s,presentation_select:(u,id)=>({...u,sel:id}),presentation_handoff:(u,s)=>({...u,sel:s.sel}),unsync:u=>u,lang:()=> 'en',desk_reset:u=>u,viewer_input:(_u,_info,s)=>s},
   Wire:{cbor:b=>JSON.parse(decoder.decode(b)),plain:x=>x},document:{getElementById:()=>null,querySelector:()=>null,querySelectorAll:()=>[],documentElement:{classList:{toggle(){}},style:{setProperty(){}}}},pairingReady:Promise.resolve(true),
   fallbackIntent:null,wantFrontend:true,Backoff,Retry:FixtureRetry,probeHub,QUIET_MS,navigator:{onLine:true},thinContinuations:{clear(){},accept:()=>false,bind(){},project:x=>x},presentationTarget,preservePresentationRoute,checkDeploy:()=>{},outbox:new Map(),OUTBOX:'outbox',OUTBOX_DAY:86400000,DRAFT:'draft:',
   fabLook(){},restoreTransition(){},transitionNode:null,transitionFor:'',shownFor:'',heldAt:0,transitionScope:()=>({}),transitionPosition:null,transitionViews:{put(){},position:()=>null},
@@ -31,6 +31,7 @@ async function fixture(supported=false, legacyProbe=false){
   modelFeedback:{clear(){}},viewerFeedback:{choice(){}},
   viewNote:'',viewNoteTimer:0,shownTarget:null,refusedViews:new Set(),refusedFallback,searchJump:null,
   targetKey:t=>t?t.kind+':'+t.id:'',holdPicture(){if(ctx.frontendNode){ctx.transitionNode=ctx.frontendNode;ctx.frontendNode=null;}},
+  attachmentIdentity:'',attachmentIdentityPending:true,attachmentIdentityGeneration:0,attachmentIdentityRetry:0,deskState:null,keepSettingsRecovery(){},composerKeeper:{selecting(){},navigationFailed(){}},reviewPosition:{accepted(){},fork(){},capture(){}},keepDesk:s=>s,deskCheck(){},attachmentController:null,attachmentView:'',attachmentSelection:'',restoreDraftAttachments(){},focusedRequestedKey:null,
   stopThin:undefined};
  vm.createContext(ctx);vm.runInContext(source.slice(a,b),ctx);ctx.showViewStatus=s=>status.push(s);
  return{ctx,calls,status,requests,sockets,VIEW_LIMITS,boot,runBoot:async()=>{let started;const start=ctx.startThin;ctx.startThin=()=>started=start();vm.runInContext(boot,ctx);await Promise.resolve();await started;},tick:ms=>{clock+=ms;for(const[id,t]of[...timers])if(t.at<=clock&&timers.has(id)){timers.delete(id);t.fn();}}};

@@ -71,7 +71,8 @@ test('nothing in the page makes up a loading page; render marks held and waiting
  assert.match(source,/frontendNode = node;transitionNode = null;transitionFor = "";heldAt = 0;\n\s*shownFor = targetKey\(detail\.target\);/);
  assert.match(css,/html\[data-backplane-held="true"\][^{]*\{ pointer-events: none; \}/);
  assert.match(css,/html\[data-backplane-held="quiet"\][^{]*\{ visibility: hidden; \}/);
- assert.match(css,/html\[data-backplane-wait="true"\][^{]*\.model-chip[^{]*\{ visibility: hidden; \}/);
+ // the whole composer waits, its model chip with it (5706aac1c)
+ assert.match(css,/html\[data-backplane-wait="true"\][^{]*\.thread-view \.composer[^{]*\{ visibility: hidden; \}/);
 });
 
 test('the first connection says Connecting only when it takes a while',()=>{
@@ -91,5 +92,5 @@ test('the first connection says Connecting only when it takes a while',()=>{
  assert.match(source,/if \(downSince\) downStatus\(downNote\);\n\s*else connectingStatus\(\);/);
  assert(!/else showViewStatus\("Connecting…"\)/.test(source));
  // any status shown cancels a pending one
- assert.match(source,/function showViewStatus\(message\) \{\n\s*clearTimeout\(connectingTimer\);connectingTimer = 0;/);
+ assert.match(source,/function showViewStatus\(message(?:, retry = true)?\) \{\n\s*clearTimeout\(connectingTimer\);connectingTimer = 0;/);
 });

@@ -8,7 +8,7 @@ async function fixture(){
  let session={sel:'A',rid:1,drafts:{A:'kept 日本語',B:'other draft'},open:{},info:{},outbox:{},route:{kind:'bot-tab',bot:'b',tab:'chat'}};
  const ctx={crypto:globalThis.crypto,Uint8Array,Array,JSON,URLSearchParams,viewMode:'view-v1',remoteReady:true,ui:session,
   App:{sel:u=>u.sel,uploading:(u,t)=>u.drafts['@att.up:'+t]||'',act:(u,action,value)=>{const r=JSON.parse(value);return{ui:{...u,drafts:{...u.drafts,['@att:'+r.thread]:r.attached}},cmds:null};},presentation:u=>{const {route,...plain}=u;return plain;}},
-  Wire:{plain:x=>x},run(){},later(){},dispatch(){throw Error('unexpected legacy action');},currentSession:()=>session,
+  Wire:{plain:x=>x},run(){},later(){},document:{cookie:'pair=p1',querySelector:()=>null},cacheIdentity:c=>'id:'+c,attachmentIdentity:'id:pair=p1',attachmentIdentityCheck:undefined,draftAttachments:{remember:async()=>{}},showViewStatus(){throw Error('unexpected status');},dispatch(){throw Error('unexpected legacy action');},currentSession:()=>session,
   fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,complete:answer=>resolve({text:async()=>JSON.stringify(answer)})}))};
  const choice=(s,a,v)=>a==='select'?{...s,sel:v,route:undefined}:a==='draft'?{...s,drafts:{...s.drafts,[s.sel]:v}}:s;
  const api={hub:'https://fixture',cid:'upload-fixture',now:()=>0,session:()=>session,target:presentationTarget,choice,
@@ -18,7 +18,7 @@ async function fixture(){
  const reply=(request=sent.at(-1),extra={})=>({t:'reply',id:request.id,ok:true,result:{version:1,hub:api.hub,generation:'7',epoch:'e',requestRevision:request.p.requestRevision,target:request.p.target,viewId:request.p.viewId||'view',viewRevision:'1',remoteReady:true,renderer:'web',shown:{type:'text',text:'current'},session:structuredClone(session),cmds:[],window:{ids:[],older:'',hasMore:false,anchor:{id:'',offset:0},partial:[]},...extra}});
  host.greeting({t:'view',version:1,renderer:'web',generation:'7',epoch:'e',limits:{...VIEW_LIMITS}});host.receive(reply());
  const settle=()=>new Promise(r=>setImmediate(r));
- const admit=async(name,accepted=true)=>{const request=sent.at(-1);assert.equal(request.p.action,'attach-up');const updated={...session,drafts:{...session.drafts,...(accepted?{['@att.up:'+session.sel]:name}:{})}};host.receive(reply(request,{session:updated}));await settle();};
+ const admit=async(name,accepted=true)=>{await settle();const request=sent.at(-1);assert.equal(request.p.action,'attach-up');const updated={...session,drafts:{...session.drafts,...(accepted?{['@att.up:'+session.sel]:name}:{})}};host.receive(reply(request,{session:updated}));await settle();};
  const finish=async(index,answer)=>{requests[index].complete(answer);await settle();const request=sent.at(-1);if(request.p.action==='attach-end'){const o=JSON.parse(request.p.value);completions.push(o);const drafts={...session.drafts,['@att.up:'+o.thread]:''};if(o.attached)drafts['@att:'+o.thread]=[drafts['@att:'+o.thread],o.attached].filter(Boolean).join('\n');host.receive(reply(request,{session:{...session,drafts}}));await settle();}};
  const file=name=>({name,type:'image/png',size:3,body:'bytes:'+name});
  return{ctx,host,requests,sent,commands,completions,admit,finish,reply,settle,file,getSession:()=>session,start:name=>ctx.upload('attach',file(name)),batch:names=>ctx.uploadFiles('attach',names.map(file))};
@@ -41,7 +41,7 @@ test('two selected PNGs are sequential, keep exact bodies and each settle once i
 });
 test('background refresh during upload admission cannot strand the second pasted image',{timeout:1000},async()=>{
  const f=await fixture(),p=f.batch(['one.png','two.png']);
- const first=f.sent.at(-1);f.host.update();assert.equal(f.sent.at(-1),first);
+ await f.settle();const first=f.sent.at(-1);assert.equal(first.p.action,'attach-up');f.host.update();assert.equal(f.sent.at(-1),first);
  await f.admit('one.png');await f.finish(0,{thread:'A',attached:'/A/one.png'});
  const second=f.sent.at(-1);assert.equal(second.p.action,'attach-up');
  f.host.receive({t:'view.changed',version:1,generation:'7',epoch:'e',viewId:'view',target:second.p.target,viewRevision:'2'});

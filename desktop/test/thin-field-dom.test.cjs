@@ -5,7 +5,7 @@ function fixture(){
  const a=source.indexOf('function setAttrs('),b=source.indexOf('// A piece of the page',a);assert(a>0&&b>a);
  const attrs=new Map(),fields=new Map([['mrreply','new 日本語 👩‍💻 é\n']]);let writes=0,value='new 日本語 👩‍💻 é\n';
  const el={get value(){return value;},set value(v){writes++;value=v;},getAttribute:k=>attrs.get(k)??null,setAttribute:(k,v)=>attrs.set(k,v),removeAttribute:k=>attrs.delete(k)};
- const ctx={Set,is:(v,t)=>v?.$===t,each:function*(xs){for(let x=xs;x?.$==='Con';x=x.tail)yield x.head;},viewMode:'view-v1',frontendNode:{},thinMailDraft:{fieldValue:(_name,fallback)=>fallback},thin:{fieldValue:(name,fallback)=>fields.get(name)??fallback}};
+ const ctx={Set,is:(v,t)=>v?.$===t,each:function*(xs){for(let x=xs;x?.$==='Con';x=x.tail)yield x.head;},viewMode:'view-v1',frontendNode:{},document:{activeElement:null},composerComposing:false,thinMailDraft:{fieldValue:(_name,fallback)=>fallback},thin:{fieldValue:(name,fallback)=>fields.get(name)??fallback}};
  vm.createContext(ctx);vm.runInContext(source.slice(a,b),ctx);
  const list=items=>items.reduceRight((tail,head)=>({$:'Con',head,tail}),{$:'Nil'}),at=(name,value)=>({$:'At',name,value});
  return {ctx,el,fields,attrs,getWrites:()=>writes,patch:items=>ctx.setAttrs(el,list([]),list(items.map(([k,v])=>at(k,v))))};
