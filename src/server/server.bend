@@ -14866,7 +14866,7 @@ def Upload.into(m: Maybe<&1, String>, s: Socket, +thread: String, +name: String,
     case Some{+dir}:
       do IO<Unit>:
         mk : Result<&1, &1, U32 & String, Unit> <- H.FS.mkdirs(dir)
-        +head : List<&2, U32> = List.take(&2, U32, rest, len)
+        +head : List<&2, U32> = W.Http.take(rest, len)
         +path : String = dir ++ "/" ++ name
         e : String <- Media.put.file(path, "w", head)
         Upload.wrote(e, s, Nat.sub(len, List.length(&2, U32, head)), thread, path)
